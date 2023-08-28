@@ -1,11 +1,11 @@
 import asyncio
+from app.locations import Directories
 from bs4 import BeautifulSoup
 from aiohttp import ClientSession
-from pathlib import PurePath
 
-APP_DIR = PurePath(__file__).parents[0]
-MAIN_DIR = PurePath(__file__).parents[1]
-SAMPLE_TEXT = MAIN_DIR.joinpath("sample_text")
+APP_DIR = Directories.APP_DIR
+MAIN_DIR = Directories.MAIN_DIR
+SAMPLE_TEXT = Directories.SAMPLE_TEXT
 URL = r"https://html.duckduckgo.com/html/?q=i+want+to+eat+your+pancreas"
 
 
@@ -32,7 +32,7 @@ async def parse_html(URL: str):
     return found_text
 
 
-async def sanitize_result(parser, URL: str):
+async def sanitize_result(parser, URL: str) -> set[str]:
     result = await parser(URL)
     remove_dupe = set(result)
     return remove_dupe
