@@ -3,6 +3,9 @@ from bs4 import BeautifulSoup
 from aiohttp import ClientSession
 from pathlib import PurePath
 
+APP_DIR = PurePath(__file__).parents[0]
+MAIN_DIR = PurePath(__file__).parents[1]
+SAMPLE_TEXT = MAIN_DIR.joinpath("sample_text")
 URL = r"https://html.duckduckgo.com/html/?q=i+want+to+eat+your+pancreas"
 
 
@@ -24,17 +27,24 @@ async def parse_html(URL: str):
     for result in search_result:
         text_container = result.find("a", {"class": "result__snippet"})
         if text_container is not None:
-            found_text.append(text_container.text)
+            text: str = text_container.text
+            found_text.append(text.encode("utf-8"))
     return found_text
 
 
 async def sanitize_result(parser, URL: str):
     result = await parser(URL)
-    return set(result)
+    remove_dupe = set(result)
+    return remove_dupe
+
+
+async def main(URL: str):
+    sanitized = await sanitize_result(parse_html, URL=URL)
+    result = [desc.decode("utf-8") for desc in sanitized]
+    return " ".join(result)
 
 
 if __name__ == "__main__":
-    with asyncio.Runner() as runner:
-        sanitized = runner.run(sanitize_result(parse_html, URL=URL))
-    print(len(sanitized))
-    print(sanitized)
+    to_write = asyncio.run(main(URL))
+    with open(SAMPLE_TEXT.joinpath("text_1.txt"), "w", encoding="utf-8") as file:
+        file.write(to_write)
