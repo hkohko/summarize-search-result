@@ -26,5 +26,12 @@ for word in filter_stopword:
         word_frequency[text_token] = 1
     else:
         word_frequency[text_token] += 1
-        
-print(word_frequency)
+
+word_max_freq = max(word_frequency.values())
+weighted_words = {}
+for word in word_frequency.keys():
+    weighted_words[word] = (
+        word_frequency.get(word) / word_max_freq
+    )  # division elapsed time is pretty awful
+
+
