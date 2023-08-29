@@ -1,4 +1,5 @@
 import asyncio
+from collections import defaultdict
 from os import listdir
 from app.locations import Directories
 from bs4 import BeautifulSoup
@@ -21,7 +22,7 @@ async def make_request(URL: str):
     return result
 
 
-async def parse_html(URL: str):
+async def parse_html(URL: str) -> list[str]:
     page_text = await make_request(URL)
     soup = BeautifulSoup(page_text, "lxml")
     body = soup.find("body", {"class": "body--html"})
@@ -38,15 +39,29 @@ async def parse_html(URL: str):
 
 
 async def sanitize_result(parser, URL: str) -> set[str]:
-    result = await parser(URL)
-    remove_dupe = set(result)
+    remove_dupe = defaultdict(int)
+    results = await parser(URL)
+    for result in results:
+        if result not in remove_dupe.keys():
+            remove_dupe[result]
     return remove_dupe
 
 
 async def main(URL: str):
-    sanitized = await parse_html(URL=URL)
+    sanitized = await sanitize_result(parse_html, URL=URL)
+    print(sanitized)
     result = [desc.decode("utf-8") for desc in sanitized]
     return " ".join(result)
+
+
+def save_output(to_write: str, save: bool = True):
+    if save:
+        nums = [idx for idx, _ in enumerate(listdir(Directories.SAMPLE_TEXT))]
+        numbering = len(nums) + 1
+        with open(
+            SAMPLE_TEXT.joinpath(f"text_{numbering}.txt"), "w", encoding="utf-8"
+        ) as file:
+            file.write(to_write)
 
 
 def user_input():
@@ -59,7 +74,4 @@ if __name__ == "__main__":
     while True:
         query = user_input()
         to_write = asyncio.run(main(BASE_URL + query))
-        nums = [idx for idx, _ in enumerate(listdir(Directories.SAMPLE_TEXT))]
-        numbering = 0 if len(nums) == 0 else len(nums) + 1
-        with open(SAMPLE_TEXT.joinpath(f"text_{numbering}.txt"), "w", encoding="utf-8") as file:
-            file.write(to_write)
+        save_output(to_write, save=True)
