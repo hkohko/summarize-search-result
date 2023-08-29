@@ -1,4 +1,5 @@
 import asyncio
+from os import listdir
 from app.locations import Directories
 from bs4 import BeautifulSoup
 from aiohttp import ClientSession
@@ -6,7 +7,11 @@ from aiohttp import ClientSession
 APP_DIR = Directories.APP_DIR
 MAIN_DIR = Directories.MAIN_DIR
 SAMPLE_TEXT = Directories.SAMPLE_TEXT
+
+BASE_URL = r"https://html.duckduckgo.com/html/?q="
 URL = r"https://html.duckduckgo.com/html/?q=i+want+to+eat+your+pancreas"
+URL_2 = r"https://html.duckduckgo.com/html/?q=watashi+ni+tenshi+ga+maiorita"
+URL_3 = r"https://html.duckduckgo.com/html/?q=who+is+donald+trump"
 
 
 async def make_request(URL: str):
@@ -39,12 +44,22 @@ async def sanitize_result(parser, URL: str) -> set[str]:
 
 
 async def main(URL: str):
-    sanitized = await sanitize_result(parse_html, URL=URL)
+    sanitized = await parse_html(URL=URL)
     result = [desc.decode("utf-8") for desc in sanitized]
     return " ".join(result)
 
 
+def user_input():
+    entry = input("Search for: ")
+    query_text = entry.replace(" ", "+")
+    return query_text
+
+
 if __name__ == "__main__":
-    to_write = asyncio.run(main(URL))
-    with open(SAMPLE_TEXT.joinpath("text_1.txt"), "w", encoding="utf-8") as file:
-        file.write(to_write)
+    while True:
+        query = user_input()
+        to_write = asyncio.run(main(BASE_URL + query))
+        nums = [idx for idx, _ in enumerate(listdir(Directories.SAMPLE_TEXT))]
+        numbering = 0 if len(nums) == 0 else len(nums) + 1
+        with open(SAMPLE_TEXT.joinpath(f"text_{numbering}.txt"), "w", encoding="utf-8") as file:
+            file.write(to_write)
