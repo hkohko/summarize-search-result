@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from pathlib import PurePath
 
+
 @dataclass
 class Directories:
     APP_DIR = PurePath(__file__).parents[0]
