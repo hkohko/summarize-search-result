@@ -1,5 +1,7 @@
 import spacy
-from spacy import language
+from heapq import nlargest
+from spacy.language import Language
+from spacy.tokens.doc import Doc
 from spacy.lang.en.stop_words import STOP_WORDS
 from string import punctuation
 from app.locations import Directories
@@ -9,8 +11,8 @@ stopword = list(STOP_WORDS)
 with open(Directories.SAMPLE_TEXT.joinpath("text_1.txt"), encoding="utf-8") as file:
     sample_text = file.read()
 
-nlp: language.Language = spacy.load("en_core_web_sm")
-docx = nlp(sample_text)
+nlp: Language = spacy.load("en_core_web_sm")
+docx: Doc = nlp(sample_text)
 
 
 def tokenize_word(docx):
@@ -20,12 +22,12 @@ def tokenize_word(docx):
     return mytoken
 
 
-def tokenize_sents(docx):
-    list_of_sentence = [sent for sent in docx.sents]
+def tokenize_sents(docx: Doc):
+    list_of_sentence = [sent.text.lower() for sent in docx.sents]
     return list_of_sentence
 
 
-def remove_stopwords(docx):
+def remove_stopwords(docx: Doc):
     filter_stopword = []
     for word in docx:
         text_token = word.text
@@ -55,11 +57,33 @@ def word_weights(word_frequency: dict[str]):
     return weighted_words
 
 
-def main():
+def rank_score_sents(docx: Doc, weighted_words: dict[str]):
+    score = {}
+    sents_list = tokenize_sents(docx)
+    words_list = tokenize_word(docx)
+    for sent in sents_list:
+        for word in words_list:
+            if word in weighted_words.keys() and len(sent.split(" ")) < 30:
+                if sent not in score.keys():
+                    score[sent] = weighted_words[word]
+                else:
+                    score[sent] += weighted_words[word]
+    return score
+
+
+def nlargest_summary(score: dict):
+    nlargest_summary = nlargest(7, score, key=score.get)
+    return nlargest_summary
+
+
+def main(docx: Doc):
     filtered_stopwords = remove_stopwords(docx)
     word_freq = get_word_frequency(filtered_stopwords)
     weighted_words = word_weights(word_freq)
+    score = rank_score_sents(docx, weighted_words)
+    prelim_summary = nlargest_summary(score)
+    print(prelim_summary)
 
 
 if __name__ == "__main__":
-    print(tokenize_word(docx))
+    main(docx)
