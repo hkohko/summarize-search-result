@@ -1,7 +1,7 @@
 import asyncio
 from collections import defaultdict
 from os import listdir
-from app.locations import Directories
+from app._locations import Directories
 from bs4 import BeautifulSoup
 from aiohttp import ClientSession
 
@@ -10,9 +10,6 @@ MAIN_DIR = Directories.MAIN_DIR
 SAMPLE_TEXT = Directories.SAMPLE_TEXT
 
 BASE_URL = r"https://html.duckduckgo.com/html/?q="
-URL = r"https://html.duckduckgo.com/html/?q=i+want+to+eat+your+pancreas"
-URL_2 = r"https://html.duckduckgo.com/html/?q=watashi+ni+tenshi+ga+maiorita"
-URL_3 = r"https://html.duckduckgo.com/html/?q=who+is+donald+trump"
 
 
 async def make_request(URL: str):
@@ -49,7 +46,6 @@ async def sanitize_result(parser, URL: str) -> set[str]:
 
 async def main(URL: str):
     sanitized = await sanitize_result(parse_html, URL=URL)
-    print(sanitized)
     result = [desc.decode("utf-8") for desc in sanitized]
     return " ".join(result)
 
